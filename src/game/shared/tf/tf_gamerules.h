@@ -345,6 +345,14 @@ public:
 
 	virtual bool	PointsMayBeCaptured( void ) OVERRIDE;
 
+	// Returns true when teammates should be able to damage/kill each other because
+	// tf_round_end_friendlyfire is enabled and the round has already been won.
+	bool ShouldForceFriendlyFire( void );
+
+	// Companion to the above - only true at tf_round_end_friendlyfire 2.
+	// See gamevars_shared.cpp for details. - Saint
+	bool ShouldForceFriendlyFireCollision( void );
+
 #ifdef GAME_DLL
 public:
 	virtual void	Precache( void );
@@ -1016,7 +1024,7 @@ public:
 
 	virtual void ProcessVerboseLogOutput( void );
 
-	void PushAllPlayersAway( const Vector& vFromThisPoint, float flRange, float flForce, int nTeam, CUtlVector< CTFPlayer* > *pPushedPlayers = NULL );
+	void PushAllPlayersAway( const Vector& vFromThisPoint, float flRange, float flForce, int nTeam, CUtlVector< CTFPlayer* > *pPushedPlayers = NULL, CBaseEntity *pIgnore = NULL );
 
 	bool ShouldDropSpellPickup();
 	void DropSpellPickup( const Vector& vPosition, int nTier = 0 ) const;

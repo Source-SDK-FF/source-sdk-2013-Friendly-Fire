@@ -6361,6 +6361,10 @@ void C_TFPlayer::AvoidPlayers( CUserCmd *pCmd )
 		if ( pAvoidPlayer == this )
 			continue;
 
+		// Collide with teammates if tf_round_end_friendlyfire is set to 2
+		if ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFireCollision() )
+			continue;
+
 		if ( !IsIndexIntoPlayerArrayValid(nAvoidPlayerCount) )
 			break;
 

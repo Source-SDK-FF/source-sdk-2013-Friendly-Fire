@@ -475,7 +475,7 @@ bool CTFProjectile_Arrow::StrikeTarget( mstudiobbox_t *pBox, CBaseEntity *pOther
 			}
 		}
 
-		if ( !InSameTeam( pOther ) )
+		if ( !InSameTeam( pOther ) || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) )
 		{
 			IScorer *pScorerInterface = dynamic_cast<IScorer*>( pAttacker );
 			if ( pScorerInterface )
@@ -632,10 +632,21 @@ void CTFProjectile_Arrow::OnArrowImpact( mstudiobbox_t *pBox, CBaseEntity *pOthe
 //-----------------------------------------------------------------------------
 bool CTFProjectile_Arrow::OnArrowImpactObject( CBaseEntity *pOther )
 {
-	if ( InSameTeam( pOther ) )
+	if ( !InSameTeam( pOther ) )
+		return false;
+
+	CBaseObject *pBuilding = dynamic_cast< CBaseObject* >( pOther );
+	CTFPlayer *pAttacker = ToTFPlayer( GetScorer() );
+	bool bOwnBuilding = ( pBuilding && pAttacker && pBuilding->GetOwner() == pAttacker );
+
+	// Always heal our own buildings, even under forced FF.
+	// Teammate buildings cannot be healed while forced FF is active.
+	if ( bOwnBuilding || !( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) )
 	{
 		BuildingHealingArrow( pOther );
+		return true;
 	}
+
 	return false;
 }
 
@@ -1403,6 +1414,16 @@ void CTFProjectile_GrapplingHook::CheckSkyboxImpact( CBaseEntity *pOther )
 	}
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: Normally the hook never collides with teammates (it can only grab
+//			enemies), but it should be able to grab a teammate too once forced
+//			friendly fire is active.
+//-----------------------------------------------------------------------------
+bool CTFProjectile_GrapplingHook::CanCollideWithTeammates() const
+{
+	return ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: HookTarget

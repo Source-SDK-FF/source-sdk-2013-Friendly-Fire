@@ -85,7 +85,7 @@ void CTFBonesaw::DoMeleeDamage( CBaseEntity* ent, trace_t& trace )
 		if ( ent && ent->IsPlayer() )
 		{
 			CTFPlayer *pTFOwner = ToTFPlayer( GetOwnerEntity() );
-			if ( pTFOwner && pTFOwner->GetTeamNumber() != ent->GetTeamNumber() )
+			if ( pTFOwner && ( pTFOwner->GetTeamNumber() != ent->GetTeamNumber() || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) )
 			{
 				int iDecaps = pTFOwner->m_Shared.GetDecapitations() + 1;
 

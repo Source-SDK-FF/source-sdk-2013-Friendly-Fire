@@ -5649,7 +5649,7 @@ void CTFGameRules::RadiusDamage( CTFRadiusDamageInfo &info )
 			if ( iDamageToEntity )
 			{
 				// Keep track of any enemies we damaged
-				if ( pEntity->IsPlayer() && !pEntity->InSameTeam( info.dmgInfo->GetAttacker() ) )
+				if ( pEntity->IsPlayer() && ( !pEntity->InSameTeam( info.dmgInfo->GetAttacker() ) || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) )
 				{
 					nDamageDealt+= iDamageToEntity;
 					iDamageEnemies++;
@@ -6871,7 +6871,7 @@ bool CTFGameRules::ApplyOnDamageModifyRules( CTakeDamageInfo &info, CBaseEntity 
 	info.SetDamage( flDamage );
 
 	// Apply on-hit attributes (after damage has been updated)
-	if ( pVictim && pAttacker && pAttacker->GetTeam() != pVictim->GetTeam() && pAttacker->IsPlayer() && pWeapon )
+	if ( pVictim && pAttacker && ( pAttacker->GetTeam() != pVictim->GetTeam() || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) && pAttacker->IsPlayer() && pWeapon )
 	{
 		pWeapon->ApplyOnHitAttributes( pVictimBaseEntity, pTFAttacker, info );
 	}
@@ -12785,7 +12785,7 @@ CBasePlayer *CTFGameRules::GetDeathScorer( CBaseEntity *pKiller, CBaseEntity *pI
 
 				if ( pDeflectOwner )
 				{
-					if ( pDeflectOwner->InSameTeam( pVictim ) == false )
+					if ( pDeflectOwner->InSameTeam( pVictim ) == false || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) )
 						 return pDeflectOwner;
 					else
 					{
@@ -21506,7 +21506,7 @@ CPhysicsProp *CreateSoccerBall( const Vector &vSpawnPos, const QAngle &qSpawnAng
 }
 
 
-void CTFGameRules::PushAllPlayersAway( const Vector& vFromThisPoint, float flRange, float flForce, int nTeam, CUtlVector< CTFPlayer* > *pPushedPlayers /*= NULL*/ )
+void CTFGameRules::PushAllPlayersAway( const Vector& vFromThisPoint, float flRange, float flForce, int nTeam, CUtlVector< CTFPlayer* > *pPushedPlayers /*= NULL*/, CBaseEntity *pIgnore /*= NULL*/ )
 {
 	CUtlVector< CTFPlayer * > playerVector;
 	CollectPlayers( &playerVector, nTeam, COLLECT_ONLY_LIVING_PLAYERS );
@@ -21514,6 +21514,9 @@ void CTFGameRules::PushAllPlayersAway( const Vector& vFromThisPoint, float flRan
 	for( int i=0; i<playerVector.Count(); ++i )
 	{
 		CTFPlayer *pPlayer = playerVector[i];
+
+		if ( pPlayer == pIgnore )
+			continue;
 
 		Vector toPlayer = pPlayer->EyePosition() - vFromThisPoint;
 

@@ -337,6 +337,10 @@ void JarExplode( int iEntIndex, CTFPlayer *pAttacker, CBaseEntity *pOriginalWeap
 		CTFPlayer *pPlayer = ToTFPlayer( pListOfEntities[i] );
 		if ( pPlayer )
 		{
+			// We don't want to pee on ourselves. We're not animals. - Saint
+			if ( pPlayer == pAttacker )
+				continue;
+
 			if ( !pPlayer->IsAlive() )
 				continue;
 
@@ -348,7 +352,7 @@ void JarExplode( int iEntIndex, CTFPlayer *pAttacker, CBaseEntity *pOriginalWeap
 				continue;
 
 			// Drench the target.
-			if ( pPlayer->GetTeamNumber() != iTeam )
+			if ( pPlayer->GetTeamNumber() != iTeam || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) )
 			{
 				if ( TFGameRules() && TFGameRules()->IsTruceActive() )
 					continue;
@@ -576,7 +580,7 @@ void CTFProjectile_Jar::OnBreadMonsterHit( CBaseEntity *pOther, trace_t *pTrace 
 		return;
 
 	CTFPlayer *pVictim = ToTFPlayer( pOther );
-	if ( !pVictim || pVictim->GetTeamNumber() == GetTeamNumber() )
+	if ( !pVictim || ( pVictim->GetTeamNumber() == GetTeamNumber() && !( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) )
 		return;
 
 	// This is a player on the other team, attach a breadmonster
@@ -718,7 +722,7 @@ void CTFProjectile_Jar::CreateStickyAttachmentToTarget( CTFPlayer *pOwner, CTFPl
 
 	// Look for nearest hitbox
 	mstudiobbox_t *closest_box = NULL;
-	if ( trace->m_pEnt && trace->m_pEnt->GetTeamNumber() != GetTeamNumber() )
+	if ( trace->m_pEnt && ( trace->m_pEnt->GetTeamNumber() != GetTeamNumber() || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) )
 	{
 		closest_box = set->pHitbox( trace->hitbox );
 	}
@@ -1010,7 +1014,7 @@ void CTFProjectile_Cleaver::OnHit( CBaseEntity *pOther )
 	if ( pPlayer->m_Shared.IsInvulnerable() || pPlayer->m_Shared.InCond( TF_COND_INVULNERABLE_WEARINGOFF ) )
 		return;
 
-	if ( pPlayer->GetTeamNumber() == pOwner->GetTeamNumber() )
+	if ( pPlayer->GetTeamNumber() == pOwner->GetTeamNumber() && !( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) )
 		return;
 
 	if ( TFGameRules() && TFGameRules()->IsTruceActive() && pOwner->IsTruceValidForEnt() )

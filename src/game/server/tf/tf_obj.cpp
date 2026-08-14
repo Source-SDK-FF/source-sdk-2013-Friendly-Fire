@@ -1198,7 +1198,7 @@ bool CBaseObject::FindSnapToBuildPos( CBaseObject *pObjectOverride )
 			// Hostile attachments look for enemy objects only
 			if ( bHostileAttachment ) 
 			{
-				if ( iTeam == iMyTeam )
+				if ( iTeam == iMyTeam && !( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) )
 				{
 					continue;
 				}
@@ -1630,7 +1630,10 @@ void CBaseObject::TraceAttack( const CTakeDamageInfo &inputInfo, const Vector &v
 	// Prevent team damage here so blood doesn't appear
 	if ( inputInfo.GetAttacker() )
 	{
-		if ( InSameTeam(inputInfo.GetAttacker()) )
+		CTFPlayer *pAttackerPlayer = ToTFPlayer( inputInfo.GetAttacker() );
+		bool bOwnBuilding = ( pAttackerPlayer && pAttackerPlayer == GetOwner() );
+
+		if ( InSameTeam(inputInfo.GetAttacker()) && ( bOwnBuilding || !( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) )
 		{
 			// Pass Damage to enemy attachments
 			int iNumObjects = GetNumObjectsOnMe();
@@ -1871,7 +1874,10 @@ int CBaseObject::OnTakeDamage( const CTakeDamageInfo &info )
 	// Check teams
 	if ( info.GetAttacker() )
 	{
-		if ( InSameTeam(info.GetAttacker()) )
+		CTFPlayer *pAttackerPlayer = ToTFPlayer( info.GetAttacker() );
+		bool bOwnBuilding = ( pAttackerPlayer && pAttackerPlayer == GetOwner() );
+
+		if ( InSameTeam(info.GetAttacker()) && ( bOwnBuilding || !( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) )
 			return 0;
 
 		if ( TFGameRules() && TFGameRules()->IsTruceActive() )

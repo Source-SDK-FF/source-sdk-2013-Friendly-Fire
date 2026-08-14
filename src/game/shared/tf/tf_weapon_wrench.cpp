@@ -9,6 +9,7 @@
 #include "decals.h"
 #include "baseobject_shared.h"
 #include "tf_viewmodel.h"
+#include "tf_gamerules.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -21,7 +22,6 @@
 #else
 	#include "tf_player.h"
 	#include "variant_t.h"
-	#include "tf_gamerules.h"
 	#include "particle_parse.h"
 	#include "tf_fx.h"
 	#include "tf_obj_sentrygun.h"
@@ -177,13 +177,17 @@ void CTFWrench::Smack( void )
 	}
 
 	// We hit, setup the smack.
+	CBaseObject *pObject = ( trace.m_pEnt && trace.m_pEnt->IsBaseObject() ) ? dynamic_cast< CBaseObject * >( trace.m_pEnt ) : NULL;
+	bool bOwnBuilding = ( pObject && pObject->GetOwner() == pPlayer );
+
 	if ( trace.fraction < 1.0f &&
 		 trace.m_pEnt &&
 		 trace.m_pEnt->IsBaseObject() &&
-		 trace.m_pEnt->GetTeamNumber() == pPlayer->GetTeamNumber() )
+		 trace.m_pEnt->GetTeamNumber() == pPlayer->GetTeamNumber()
+		 && ( bOwnBuilding || !( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) )
 	{
 #ifdef GAME_DLL
-		OnFriendlyBuildingHit( dynamic_cast< CBaseObject * >( trace.m_pEnt ), pPlayer, trace.endpos );
+		OnFriendlyBuildingHit( pObject, pPlayer, trace.endpos );
 #else
 		// NVNT if the local player is the owner of this wrench 
 		//   Notify the haptics system we just repaired something.

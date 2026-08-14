@@ -26,6 +26,10 @@
 #include "tf_generic_bomb.h"
 #endif
 
+#if defined( TF_CLIENT_DLL ) || defined( TF_DLL )
+#include "tf_gamerules.h"
+#endif
+
 #define ENERGY_RING_DISPATCH_EFFECT			"ClientProjectile_EnergyRing"
 #define ENERGY_RING_DISPATCH_EFFECT_POMSON	"ClientProjectile_EnergyRingPomson"
 
@@ -257,7 +261,7 @@ void CTFProjectile_EnergyRing::ProjectileTouch( CBaseEntity *pOther )
 	if ( bCombatEntity )
 	{
 		// Bison projectiles shouldn't collide with friendly things
-		if ( ShouldPenetrate() && ( pOther->InSameTeam( this ) || ( gpGlobals->curtime - m_flLastHitTime ) < tf_bison_tick_time.GetFloat() ) )
+		if ( ShouldPenetrate() && ( ( pOther->InSameTeam( this ) && !( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) || ( gpGlobals->curtime - m_flLastHitTime ) < tf_bison_tick_time.GetFloat() ) )
 			return;
 
 		m_flLastHitTime = gpGlobals->curtime;

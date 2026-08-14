@@ -1,3 +1,39 @@
+# TF2 Post-round Friendly Fire
+
+Inspired by the functionality in [Pre-Fortress 2](https://store.steampowered.com/app/3555120/PreFortress_2/), the purpose of this repository is for the intention of adding post-round friendly fire as a cvar.
+
+There has been extensive work done to the code in order to allow this to function. 
+
+The cvar name is `tf_round_end_friendlyfire` and has 3 separate modes.
+- 0: Off.
+- 1: On, but no player collisions.
+- 2: On, and player collisions are enabled.
+
+The reason for player collisions is to enable certain functionality that server operators may want, such as the ability to charge into a teammate as the Demoman and impact them, or to land on a teammate's with the Mantreads. These will not work when the cvar is set to 1. However, setting it to 2 could cause issues such as players being stuck inside one another when a round ends. Basically? Pick your poison. 
+
+Great effort has been made to make it so that every weapon should act as it does in the normal game when fighting an enemy player or building, with some caveats. 
+When Friendly Fire mode is enabled and the round is over:
+
+- Sentries will not auto-target teammates after the round is over. The Engineer can, however, make use of his wrangler to shoot and blow up his teammates!
+- Telefragging teammates is possible regardless of which FF mode is enabled.
+- All Soldier banners have been edited so that they are only active for the player that has deployed it.
+- Backstabbing a teammate with the Your Eternal Reward will show your teammates that you stabbed a teammate with it.
+- Mediguns are unaffected and will work as normal. Be careful who you decide to heal, or they may turn on you next! 
+
+There may be other edge cases that have not been covered here. 
+
+For anyone that is adding this to their own SDK game, I'd also recommend changing `mp_bonusroundtime` in `teamplayroundbased_gamerules.cpp` from it's base cap of 15s to something like 30-60s, configurable by the server operator. This is fun functionality, give people more time to murder their teammates! 
+
+My only request is that if you use this in your own project, please credit me. If you find issues with the code, find something I missed, or have a better way to refactor some areas, please open a PR!
+
+Thanks,
+
+SaintSoftware
+
+___
+*Original SDK Readme:*
+___
+
 # Source SDK 2013
 
 Source code for Source SDK 2013.

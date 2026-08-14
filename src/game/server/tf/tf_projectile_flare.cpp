@@ -246,7 +246,7 @@ void CTFProjectile_Flare::Explode( trace_t *pTrace, CBaseEntity *pOther )
 				CTakeDamageInfo info( this, pAttacker, m_hLauncher, vec3_origin, vecOrigin, GetDamage(), iDamageType, m_bIsFromTaunt ? TF_DMG_CUSTOM_FLARE_PELLET : 0 );
 				pTFVictim->TakeDamage( info );
 
-				bool bIsEnemy = pAttacker && pTFVictim->GetTeamNumber() != pAttacker->GetTeamNumber();
+				bool bIsEnemy = pAttacker && ( pTFVictim->GetTeamNumber() != pAttacker->GetTeamNumber() || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) );
 				
 				if ( !pTFVictim->m_Shared.IsImmuneToPushback() && bIsEnemy )
 				{

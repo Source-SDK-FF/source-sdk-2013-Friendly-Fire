@@ -9,6 +9,10 @@
 #include "baseprojectile.h"
 #include "basecombatweapon_shared.h"
 
+#if defined( TF_CLIENT_DLL ) || defined( TF_DLL )
+#include "tf_gamerules.h"
+#endif
+
 #ifdef GAME_DLL
 	#include "iscorer.h"
 #endif
@@ -134,6 +138,24 @@ void CBaseProjectile::Spawn()
 void CBaseProjectile::CollideWithTeammatesThink()
 {
 	m_bCanCollideWithTeammates = true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: How long to wait after spawning before we can collide with (and
+//			therefore damage) teammates. Skipped entirely once round-end forced
+//			friendly fire is active, so grenades/rockets fired after the round
+//			has been won can hit teammates immediately instead of passing through.
+//			This is simply a workaround so that you can immediately murder your
+//			teammates after winning a round without any cooldown. - Saint
+//-----------------------------------------------------------------------------
+float CBaseProjectile::GetCollideWithTeammatesDelay() const
+{
+#if defined( TF_DLL )
+	if ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() )
+		return 0.0f;
+#endif
+
+	return 0.25f;
 }
 
 //-----------------------------------------------------------------------------

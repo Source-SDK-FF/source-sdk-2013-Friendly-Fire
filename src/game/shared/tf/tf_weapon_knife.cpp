@@ -200,7 +200,7 @@ void CTFKnife::PrimaryAttack( void )
 		{
 			CTFPlayer *pTarget = ToTFPlayer( trace.m_pEnt );
 
-			if ( pTarget && pTarget->GetTeamNumber() != pPlayer->GetTeamNumber() )
+			if ( pTarget && ( pTarget->GetTeamNumber() != pPlayer->GetTeamNumber() || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) )
 			{
 				// Deal extra damage to players when stabbing them from behind
 				if ( CanPerformBackstabAgainstTarget( pTarget ) )
@@ -663,7 +663,7 @@ void CTFKnife::BackstabVMThink( void )
 		{
 			CTFPlayer *pTarget = ToTFPlayer( trace.m_pEnt );
 
-			if ( pTarget && pTarget->GetTeamNumber() != pPlayer->GetTeamNumber() )
+			if ( pTarget && ( pTarget->GetTeamNumber() != pPlayer->GetTeamNumber() || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) )
 			{
 				if ( CanPerformBackstabAgainstTarget( pTarget ) )
 				{

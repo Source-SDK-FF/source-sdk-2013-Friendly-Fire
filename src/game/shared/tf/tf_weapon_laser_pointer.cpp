@@ -21,6 +21,7 @@
 #include "toolframework_client.h"
 #include "input.h"
 #include "sourcevr/isourcevirtualreality.h"
+#include "tf_gamerules.h"
 
 // forward declarations
 void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
@@ -299,9 +300,16 @@ void CTFLaserPointer::UpdateLaserDot( void )
 	Vector vecEndPos = vecMuzzlePos + ( forward * MAX_TRACE_LENGTH );
 
 	trace_t	trace;
-	CTraceFilterIgnoreTeammatesAndTeamObjects filter( pPlayer, COLLISION_GROUP_NONE, pPlayer->GetTeamNumber() );
-	UTIL_TraceLine( vecMuzzlePos, vecEndPos, MASK_SOLID, &filter, &trace );
-
+	if ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() )
+	{
+		CTraceFilterSimple filter( pPlayer, COLLISION_GROUP_NONE );
+		UTIL_TraceLine( vecMuzzlePos, vecEndPos, MASK_SOLID, &filter, &trace );
+	}
+	else
+	{
+		CTraceFilterIgnoreTeammatesAndTeamObjects filter( pPlayer, COLLISION_GROUP_NONE, pPlayer->GetTeamNumber() );
+		UTIL_TraceLine( vecMuzzlePos, vecEndPos, MASK_SOLID, &filter, &trace );
+	}
 	if ( m_hLaserDot )
 	{
 		CBaseEntity *pEntity = NULL;
@@ -431,8 +439,16 @@ int CLaserDot::DrawModel( int flags )
 		}
 
 		trace_t	trace;
-		CTraceFilterIgnoreTeammatesAndTeamObjects filter( pPlayer, COLLISION_GROUP_NONE, pPlayer->GetTeamNumber() );
-		UTIL_TraceLine( vecAttachment, vecAttachment + ( vecDir * flDist ), MASK_SOLID, &filter, &trace );
+		if ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() )
+		{
+			CTraceFilterSimple filter( pPlayer, COLLISION_GROUP_NONE );
+			UTIL_TraceLine( vecAttachment, vecAttachment + ( vecDir * flDist ), MASK_SOLID, &filter, &trace );
+		}
+		else
+		{
+			CTraceFilterIgnoreTeammatesAndTeamObjects filter( pPlayer, COLLISION_GROUP_NONE, pPlayer->GetTeamNumber() );
+			UTIL_TraceLine( vecAttachment, vecAttachment + ( vecDir * flDist ), MASK_SOLID, &filter, &trace );
+		}
 
 		// Backup off the hit plane, towards the source
 		vecEndPos = trace.endpos + vecDir * -4;

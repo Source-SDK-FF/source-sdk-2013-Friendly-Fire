@@ -7,6 +7,10 @@
 #include "cbase.h"
 #include "gamevars_shared.h"
 
+#if defined( TF_CLIENT_DLL ) || defined( TF_DLL )
+#include "tf_gamerules.h"
+#endif
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -47,6 +51,41 @@ ConVar friendlyfire(
 	FCVAR_REPLICATED | FCVAR_NOTIFY,
 	"Allows team members to injure other members of their team"
 	);
+
+#if defined( TF_CLIENT_DLL ) || defined( TF_DLL )
+ConVar tf_round_end_friendlyfire(
+	"tf_round_end_friendlyfire",
+	"0",
+	FCVAR_REPLICATED | FCVAR_NOTIFY,
+	"Allows team members to injure other members of their team after a win.\n"
+	"  0 = FF Off (Normal TF2 functionality)\n"
+	"  1 = FF On (Post-round Friendly Fire is fully enabled. Kill 'em all!)\n"
+	"  2 = FF On (Same as 1, but friendly player collisions also gets enabled)"
+	);
+
+//-----------------------------------------------------------------------------
+// Purpose: Teammates should be able to murder each other once the round is over,
+//			because it's fucking hilarious. - Saint
+//-----------------------------------------------------------------------------
+bool CTFGameRules::ShouldForceFriendlyFire( void )
+{
+	return tf_round_end_friendlyfire.GetBool() && RoundHasBeenWon();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Narrower than ShouldForceFriendlyFire() above - only true at cvar
+//			value 2. Gates teammate-vs-teammate movement collision specifically
+//			separately from damage/effects. This is done so that if a server
+//			operator chooses to enable such things as shield collisions,
+//			setting the value to 2 will do so for that scenario. 
+//			However, it can make players get stuck inside one another when
+//			the round ends, so keep that in mind - Saint
+//-----------------------------------------------------------------------------
+bool CTFGameRules::ShouldForceFriendlyFireCollision( void )
+{
+	return tf_round_end_friendlyfire.GetInt() >= 2 && RoundHasBeenWon();
+}
+#endif
 
 ConVar mp_fadetoblack( 
 	"mp_fadetoblack", 

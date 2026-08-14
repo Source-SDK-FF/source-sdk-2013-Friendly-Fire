@@ -692,7 +692,9 @@ bool CTFHudDeathNotice::ShouldDraw( void )
 
 bool CTFHudDeathNotice::ShouldShowDeathNotice( IGameEvent *event )
 { 
-	if ( event->GetBool( "silent_kill" ) )
+	// Kills should be silent, unless we're in post-round FF mode. 
+	// Then it should tell everyone! - Saint
+	if ( event->GetBool( "silent_kill" ) && !( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) )
 	{
 		// Don't show a kill event for the team of the silent kill victim.
 		int iVictimID = engine->GetPlayerForUserID( event->GetInt( "userid" ) );

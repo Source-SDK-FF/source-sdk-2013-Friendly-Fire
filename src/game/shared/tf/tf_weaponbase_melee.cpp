@@ -672,7 +672,9 @@ bool CTFWeaponBaseMelee::OnSwingHit( trace_t &trace )
 				}
 			}
 		}
-		else
+		bool bMeleeForcedFF = ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() );
+
+		if ( !pTargetPlayer->InSameTeam( pPlayer ) || bMeleeForcedFF )
 		{
 			float flSpeedBoostOnHitEnemy = 0.f;
 			CALL_ATTRIB_HOOK_FLOAT( flSpeedBoostOnHitEnemy, speed_boost_on_hit_enemy );
@@ -887,7 +889,7 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity* ent, trace_t& trace, float 
 		{
 			CTFPlayer *pVictimPlayer = ToTFPlayer( ent );
 
-			if ( pVictimPlayer && pVictimPlayer->CanBeForcedToLaugh() && ( pPlayer->GetTeamNumber() != pVictimPlayer->GetTeamNumber() ) )
+			if ( pVictimPlayer && pVictimPlayer->CanBeForcedToLaugh() && ( pPlayer->GetTeamNumber() != pVictimPlayer->GetTeamNumber() || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) )
 			{
 				// force victim to laugh!
 				pVictimPlayer->Taunt( TAUNT_MISC_ITEM, MP_CONCEPT_TAUNT_LAUGH );
@@ -906,7 +908,7 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity* ent, trace_t& trace, float 
 		{
 			CTFPlayer *pVictimPlayer = ToTFPlayer( ent );
 
-			if ( pVictimPlayer && pVictimPlayer->CanBeForcedToLaugh() && ( pPlayer->GetTeamNumber() != pVictimPlayer->GetTeamNumber() ) )
+			if ( pVictimPlayer && pVictimPlayer->CanBeForcedToLaugh() && ( pPlayer->GetTeamNumber() != pVictimPlayer->GetTeamNumber() || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) )
 			{
 				CTFWeaponBase *myWeapon = pPlayer->GetActiveTFWeapon();
 				CTFWeaponBase *theirWeapon = pVictimPlayer->GetActiveTFWeapon();
@@ -957,7 +959,7 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity* ent, trace_t& trace, float 
 
 #endif
 	// Don't impact trace friendly players or objects
-	if ( ent && ent->GetTeamNumber() != pPlayer->GetTeamNumber() )
+	if ( ent && ( ent->GetTeamNumber() != pPlayer->GetTeamNumber() || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) )
 	{
 #ifdef CLIENT_DLL
 		UTIL_ImpactTrace( &trace, DMG_CLUB );

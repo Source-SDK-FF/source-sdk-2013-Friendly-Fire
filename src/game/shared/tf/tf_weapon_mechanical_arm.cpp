@@ -761,7 +761,10 @@ void CTFProjectile_MechanicalArmOrb::CheckForPlayers( int nNumToZap )
 		if ( !pTarget->IsAlive() )
 			continue;
 
-		if ( pTFOwner->InSameTeam( pTarget ) )
+		if ( pTarget == pTFOwner )
+			continue;
+
+		if ( pTFOwner->InSameTeam( pTarget ) && !( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) )
 			continue;
 
 		if ( !FVisible( pTarget, MASK_OPAQUE ) )

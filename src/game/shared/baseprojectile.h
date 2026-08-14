@@ -51,7 +51,7 @@ public:
 	void IncrementDestroyableHitCount( void ) { ++m_iDestroyableHitCount; }
 
 	virtual bool CanCollideWithTeammates() const { return m_bCanCollideWithTeammates; }
-	virtual float GetCollideWithTeammatesDelay() const { return 0.25f; }
+	virtual float GetCollideWithTeammatesDelay() const;
 #endif // GAME_DLL
 
 #ifdef TF_DLL

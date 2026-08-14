@@ -26,6 +26,10 @@
 	#include "tf_generic_bomb.h"
 #endif
 
+#if defined( TF_CLIENT_DLL ) || defined( TF_DLL )
+#include "tf_gamerules.h"
+#endif
+
 #ifdef CLIENT_DLL
 	#define CTFProjectile_BallOfFire				C_TFProjectile_BallOfFire
 #endif
@@ -265,7 +269,7 @@ public:
 		CTFPlayer* pTFOwner = ToTFPlayer( pOwner );
 		CTFPlayer *pTFPlayer = ToTFPlayer( pTarget );
 		
-		if ( pOwner->InSameTeam( pTarget ) )
+		if ( pOwner->InSameTeam( pTarget ) && !( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) )
 		{
 			if ( pTFPlayer )
 			{

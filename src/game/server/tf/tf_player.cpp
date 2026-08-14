@@ -8297,7 +8297,13 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 		}
 
 		// Prevent team damage here so blood doesn't appear
-		if ( !g_pGameRules->FPlayerCanTakeDamage( this, pAttacker, info ) )
+		CTakeDamageInfo infoForceFF = info;
+		if ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() )
+		{
+			infoForceFF.SetForceFriendlyFire( true );
+		}
+
+		if ( !g_pGameRules->FPlayerCanTakeDamage( this, pAttacker, infoForceFF ) )
 		{
 			return;
 		}
@@ -8864,7 +8870,13 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	}
 
 	// Make sure the player can take damage from the attacking entity
-	if ( !g_pGameRules->FPlayerCanTakeDamage( this, pAttacker, info ) )
+	CTakeDamageInfo infoForceFF = info;
+	if ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() )
+	{
+		infoForceFF.SetForceFriendlyFire( true );
+	}
+
+	if ( !g_pGameRules->FPlayerCanTakeDamage( this, pAttacker, infoForceFF ) )
 	{
 		if ( bDebug )
 		{
@@ -8963,7 +8975,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		{
 			// Did we land on a guy from the enemy team?
 			CTFPlayer *pOther = ToTFPlayer( GetGroundEntity() );
-			if ( pOther && pOther->GetTeamNumber() != GetTeamNumber() )
+			if ( pOther && ( pOther->GetTeamNumber() != GetTeamNumber() || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) )
 			{
 				float flStompDamage = 10.0f + info.GetDamage() * 3.f;
 
@@ -8997,6 +9009,8 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				float flPushAmount = RemapValClamped( flOriginalVelocity, 100.f, 1000.f, tf_rocketpack_impact_push_min.GetFloat(), tf_rocketpack_impact_push_max.GetFloat() );
 				float flPushRadius = RemapValClamped( flOriginalVelocity, 100.f, 1000.f, 150.f, 220.f );
 			
+				bool bLandingForcedFF = ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() );
+
 				// Stun, too?
 				int iImpactStun = 0;
 				CALL_ATTRIB_HOOK_INT( iImpactStun, falling_impact_radius_stun );
@@ -9006,7 +9020,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 					m_Shared.ApplyRocketPackStun( ( bHitEnemy ) ? 5.f : flStunTime );
 				}
 				
-				TFGameRules()->PushAllPlayersAway( GetAbsOrigin(), flPushRadius, flPushAmount, GetEnemyTeam( GetTeamNumber() ) );
+				TFGameRules()->PushAllPlayersAway( GetAbsOrigin(), flPushRadius, flPushAmount, bLandingForcedFF ? TEAM_ANY : GetEnemyTeam( GetTeamNumber() ), NULL, this );
 
 				m_Local.m_flFallVelocity = 0.f;
 
@@ -10158,7 +10172,9 @@ void CTFPlayer::DamageEffect(float flDamage, int fDamageType)
 //-----------------------------------------------------------------------------
 bool CTFPlayer::ShouldCollide( int collisionGroup, int contentsMask ) const
 {
-	if ( ( ( collisionGroup == COLLISION_GROUP_PLAYER_MOVEMENT ) && tf_avoidteammates.GetBool() ) ||
+	bool bForcedFriendlyFire = ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFireCollision() );
+
+	if ( ( ( collisionGroup == COLLISION_GROUP_PLAYER_MOVEMENT ) && tf_avoidteammates.GetBool() && !bForcedFriendlyFire ) ||
 		collisionGroup == TFCOLLISION_GROUP_ROCKETS || collisionGroup == TFCOLLISION_GROUP_ROCKET_BUT_NOT_WITH_OTHER_ROCKETS )
 	{
 		switch( GetTeamNumber() )
@@ -18489,7 +18505,7 @@ void CTFPlayer::DoTauntAttack( void )
 		{
 			CBaseEntity *pEnt = tr.m_pEnt;
 
-			if ( pEnt && pEnt->IsPlayer() && pEnt->GetTeamNumber() > LAST_SHARED_TEAM && pEnt->GetTeamNumber() != GetTeamNumber() )
+			if ( pEnt && pEnt->IsPlayer() && pEnt->GetTeamNumber() > LAST_SHARED_TEAM && ( pEnt->GetTeamNumber() != GetTeamNumber() || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) )
 			{
 				CTFPlayer *pVictim = ToTFPlayer( pEnt );
 
@@ -18625,7 +18641,7 @@ void CTFPlayer::DoTauntAttack( void )
 		{
 			CBaseEntity *pEnt = tr.m_pEnt;
 
-			if ( pEnt && pEnt->IsPlayer() && pEnt->GetTeamNumber() > LAST_SHARED_TEAM && pEnt->GetTeamNumber() != GetTeamNumber() )
+			if ( pEnt && pEnt->IsPlayer() && pEnt->GetTeamNumber() > LAST_SHARED_TEAM && ( pEnt->GetTeamNumber() != GetTeamNumber() || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) )
 			{
 				// Launch them up a little
 				AngleVectors( QAngle(-45, m_angEyeAngles[YAW], 0), &vecForward );
@@ -18696,10 +18712,10 @@ void CTFPlayer::DoTauntAttack( void )
 					continue;
 
 				CTFPlayer *pTarget = ToTFPlayer( pObjects[i] );
-				if ( !pTarget )
+				if ( !pTarget || pTarget == this )
 					continue;
 
-				if ( pTarget->GetTeamNumber() == GetTeamNumber() )
+				if ( pTarget->GetTeamNumber() == GetTeamNumber() && !( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) )
 					continue;
 
 				// Do a quick trace and make sure we have LOS.
@@ -18769,7 +18785,8 @@ void CTFPlayer::DoTauntAttack( void )
 		{
 			// Skip players on the same team or who are invuln
 			CTFPlayer *pPlayer = ToTFPlayer( pEntity );
-			if ( !pPlayer || InSameTeam( pPlayer ) || pPlayer->m_Shared.InCond( TF_COND_INVULNERABLE ) )
+			bool bForceFriendlyFire = ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() );
+			if ( !pPlayer || pPlayer == this || ( InSameTeam( pPlayer ) && !bForceFriendlyFire ) || pPlayer->m_Shared.InCond( TF_COND_INVULNERABLE ) )
 				continue;
 
 			// CEntitySphereQuery actually does a box test. So we need to make sure the distance is less than the radius first.
@@ -18899,7 +18916,7 @@ void CTFPlayer::DoTauntAttack( void )
 		{
 			CBaseEntity *pEnt = tr.m_pEnt;
 
-			if ( pEnt && pEnt->IsPlayer() && pEnt->GetTeamNumber() > LAST_SHARED_TEAM && pEnt->GetTeamNumber() != GetTeamNumber() )
+			if ( pEnt && pEnt->IsPlayer() && pEnt->GetTeamNumber() > LAST_SHARED_TEAM && ( pEnt->GetTeamNumber() != GetTeamNumber() || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) )
 			{
 				CTFPlayer *pVictim = ToTFPlayer( pEnt );
 
@@ -18951,7 +18968,7 @@ void CTFPlayer::DoTauntAttack( void )
 		{
 			CBaseEntity *pEnt = tr.m_pEnt;
 
-			if ( pEnt && pEnt->IsPlayer() && pEnt->GetTeamNumber() > LAST_SHARED_TEAM && pEnt->GetTeamNumber() != GetTeamNumber() )
+			if ( pEnt && pEnt->IsPlayer() && pEnt->GetTeamNumber() > LAST_SHARED_TEAM && ( pEnt->GetTeamNumber() != GetTeamNumber() || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) )
 			{
 				vecForward = (WorldSpaceCenter() - pEnt->WorldSpaceCenter());
 				VectorNormalize( vecForward );
@@ -18972,7 +18989,7 @@ void CTFPlayer::DoTauntAttack( void )
 		{
 			CBaseEntity *pEnt = tr.m_pEnt;
 
-			if ( pEnt && pEnt->IsPlayer() && pEnt->GetTeamNumber() > LAST_SHARED_TEAM && pEnt->GetTeamNumber() != GetTeamNumber() )
+			if ( pEnt && pEnt->IsPlayer() && pEnt->GetTeamNumber() > LAST_SHARED_TEAM && ( pEnt->GetTeamNumber() != GetTeamNumber() || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) )
 			{
 				vecForward = (WorldSpaceCenter() - pEnt->WorldSpaceCenter());
 				VectorNormalize( vecForward );
@@ -19088,7 +19105,7 @@ void CTFPlayer::DoTauntAttack( void )
 			DispatchRPSEffect( m_hHighFivePartner.Get(), s_pszTauntRPSParticleNames[iReceiver] );
 
 			// setup time to kill the opposing team loser
-			if ( GetTeamNumber() != m_hHighFivePartner->GetTeamNumber() )
+			if ( GetTeamNumber() != m_hHighFivePartner->GetTeamNumber() || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) )
 			{
 				m_iTauntAttack = TAUNTATK_RPS_KILL;
 				m_flTauntAttackTime = m_flTauntRemoveTime - 1.2f;
@@ -19147,7 +19164,7 @@ void CTFPlayer::DoTauntAttack( void )
 		{
 			CBaseEntity *pEnt = tr.m_pEnt;
 
-			if ( pEnt && pEnt->IsPlayer() && pEnt->GetTeamNumber() > LAST_SHARED_TEAM && pEnt->GetTeamNumber() != GetTeamNumber() )
+			if ( pEnt && pEnt->IsPlayer() && pEnt->GetTeamNumber() > LAST_SHARED_TEAM && ( pEnt->GetTeamNumber() != GetTeamNumber() || ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) ) )
 			{
 				// Launch them up a little
 				AngleVectors( QAngle( -45, m_angEyeAngles[ YAW ], 0 ), &vecForward );
@@ -20081,7 +20098,7 @@ bool CTFPlayer::WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, const 
 	bool bIsMedic = false;
 	bool bIsMeleeingTeamMate = false;
 
-	if ( !friendlyfire.GetBool() )
+	if ( !friendlyfire.GetBool() && !( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) )
 	{
 		//Do Lag comp on medics trying to heal team mates.
 		if ( IsPlayerClass( TF_CLASS_MEDIC ) == true )

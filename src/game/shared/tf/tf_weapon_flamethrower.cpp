@@ -1615,7 +1615,9 @@ void CTFFlameThrower::ComputeCrayAirBlastForce( CTFPlayer *pTarget, CTFPlayer *p
 //-----------------------------------------------------------------------------
 bool CTFFlameThrower::DeflectPlayer( CTFPlayer *pTarget, CTFPlayer *pOwner, Vector &vecForward )
 {
-	if ( pTarget->GetTeamNumber() == pOwner->GetTeamNumber() && pTarget != pOwner )
+	bool bAirblastForcedFF = ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() );
+
+	if ( pTarget->GetTeamNumber() == pOwner->GetTeamNumber() && pTarget != pOwner && !bAirblastForcedFF )
 	{
 		if ( pTarget->m_Shared.InCond( TF_COND_BURNING ) && CanAirBlastPutOutTeammate() )
 		{
@@ -1912,8 +1914,10 @@ bool CTFFlameThrower::DeflectEntity( CBaseEntity *pTarget, CTFPlayer *pOwner, Ve
 		return false;
 
 	// can't deflect things on our own team
-	// except the passtime ball when in passtime mode
+	// except the passtime ball when in passtime mode, or during forced friendly fire
+	bool bDeflectForcedFF = ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() );
 	if ( (pTarget->GetTeamNumber() == pOwner->GetTeamNumber()) 
+		&& !bDeflectForcedFF
 		&& !(g_pPasstimeLogic && (g_pPasstimeLogic->GetBall() == pTarget)) )
 	{
 		return false;
@@ -2939,8 +2943,8 @@ void CTFFlameEntity::FlameThink( void )
 					continue;
 			}
 
-			// burn them all!
-			if ( pEnt->IsPlayer() && pEnt->InSameTeam( pAttacker ) )
+			// burn them all! (including teammates, if tf_round_end_friendlyfire is enabled!)
+			if ( pEnt->IsPlayer() && pEnt->InSameTeam( pAttacker ) && !( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) )
 			{
 				OnCollideWithTeammate( ToTFPlayer( pEnt ) );
 			}

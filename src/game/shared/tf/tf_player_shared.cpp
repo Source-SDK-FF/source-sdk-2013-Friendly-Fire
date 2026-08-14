@@ -4617,7 +4617,11 @@ void CTFPlayerShared::ApplyRocketPackStun( float flStunDuration )
 		if ( !pObjects[i]->IsAlive() )
 			continue;
 
-		if ( m_pOuter->InSameTeam( pObjects[i] ) )
+		if ( pObjects[i] == m_pOuter )
+			continue;
+
+		bool bStunForcedFF = ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() );
+		if ( m_pOuter->InSameTeam( pObjects[i] ) && !bStunForcedFF )
 			continue;
 
 		if ( !m_pOuter->FVisible( pObjects[i], MASK_OPAQUE ) )
@@ -10031,7 +10035,7 @@ public:
 
 		if ( pEnt->IsCombatCharacter() || pEnt->IsBaseObject() )
 		{
-			if ( m_bIgnoreTeammates && pEnt->GetTeam() == m_pShooter->GetTeam() )
+			if ( m_bIgnoreTeammates && pEnt->GetTeam() == m_pShooter->GetTeam() && !( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) )
 				return true;
 
 			Ray_t ray;
@@ -10375,14 +10379,14 @@ void CTFPlayer::FireBullet( CTFWeaponBase *pWpn, const FireBulletsInfo_t &info, 
 			if ( ePenetrateType == TF_DMG_CUSTOM_PENETRATE_MY_TEAM )
 			{
 				// Skip friendlies if we're looking for the first enemy
-				if ( GetTeamNumber() == pTarget->GetTeamNumber() )
+				if ( GetTeamNumber() == pTarget->GetTeamNumber() && !( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) )
 					continue;
 				
 				pTraceToUse = &trace;
 			}
 			else if ( ePenetrateType == TF_DMG_CUSTOM_PENETRATE_NONBURNING_TEAMMATE )
 			{
-				if ( GetTeamNumber() == pTarget->GetTeamNumber() )
+				if ( GetTeamNumber() == pTarget->GetTeamNumber() && !( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) )
 				{
 					if ( pTarget->IsPlayer() )
 					{
@@ -13997,6 +14001,12 @@ void CTFPlayerShared::PulseRageBuff( ERageBuffSlot eBuffSlot )
 			if ( eBuffCond == TF_COND_CRITBOOSTED_RAGE_BUFF || eBuffCond == TF_COND_SNIPERCHARGE_RAGE_BUFF )
 			{
 				// Pyro and sniper only buffs themselves
+				continue;
+			}
+
+			if ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() )
+			{
+				// If ForceFF is enabled, banners now only buff the activating player
 				continue;
 			}
 		}

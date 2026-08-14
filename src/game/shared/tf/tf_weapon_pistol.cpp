@@ -125,8 +125,10 @@ void CTFPistol_ScoutPrimary::Push( void )
 #ifdef GAME_DLL
 	lagcompensation->StartLagCompensation( pOwner, pOwner->GetCurrentCommand() );
 
+	bool bPushForcedFF = ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() );
+
 	CUtlVector< CTFPlayer* > enemyVector;
-	CollectPlayers( &enemyVector, GetEnemyTeam( pOwner->GetTeamNumber() ), COLLECT_ONLY_LIVING_PLAYERS );
+	CollectPlayers( &enemyVector, bPushForcedFF ? TEAM_ANY : GetEnemyTeam( pOwner->GetTeamNumber() ), COLLECT_ONLY_LIVING_PLAYERS );
 
 	for ( int i = 0; i < enemyVector.Count(); ++i )
 	{
@@ -138,7 +140,7 @@ void CTFPistol_ScoutPrimary::Push( void )
 		if ( pVictim == pOwner )
 			continue;
 
-		if ( pVictim->InSameTeam( pOwner ) )
+		if ( pVictim->InSameTeam( pOwner ) && !bPushForcedFF )
 			continue;
 
 		if ( TFGameRules() && TFGameRules()->IsTruceActive() && pOwner->IsTruceValidForEnt() )

@@ -695,7 +695,7 @@ void CTFFlameManager::OnCollide( CBaseEntity *pEnt, int iPointIndex )
 	if ( !BCanBurnEntityThisFrame( pEnt ) )
 		return;
 
-	if ( pEnt->IsPlayer() && pEnt->InSameTeam( pAttacker ) )
+	if ( pEnt->IsPlayer() && pEnt->InSameTeam( pAttacker ) && !( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() ) )
 	{
 		CTFPlayer *pPlayer = ToTFPlayer( pEnt );
 

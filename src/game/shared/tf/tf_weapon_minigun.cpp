@@ -515,7 +515,8 @@ void CTFMinigun::RingOfFireAttack( int nDamage )
 	{
 		// Skip players on the same team or who are invuln
 		CTFPlayer *pVictim = ToTFPlayer( pEntity );
-		if ( !pVictim || InSameTeam( pVictim ) || pVictim->m_Shared.InCond( TF_COND_INVULNERABLE ) )
+		bool bForceFriendlyFire = ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() );
+		if ( !pVictim || pVictim == pPlayer || ( InSameTeam( pVictim ) && !bForceFriendlyFire ) || pVictim->m_Shared.InCond( TF_COND_INVULNERABLE ) )
 			continue;
 
 		// Make sure their bounding box is near our ground plane
