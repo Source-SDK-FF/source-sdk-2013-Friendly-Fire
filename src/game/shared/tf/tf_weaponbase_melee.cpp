@@ -611,6 +611,8 @@ bool CTFWeaponBaseMelee::OnSwingHit( trace_t &trace )
 
 #if !defined (CLIENT_DLL)
 
+		bool bMeleeForcedFF = ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() );
+
 		if ( pTargetPlayer->m_Shared.HasPasstimeBall() && g_pPasstimeLogic ) 
 		{
 			// This handles stealing the ball from teammates since there's no damage involved
@@ -672,9 +674,8 @@ bool CTFWeaponBaseMelee::OnSwingHit( trace_t &trace )
 				}
 			}
 		}
-		bool bMeleeForcedFF = ( TFGameRules() && TFGameRules()->ShouldForceFriendlyFire() );
 
-		if ( !pTargetPlayer->InSameTeam( pPlayer ) || bMeleeForcedFF )
+		else if ( pTargetPlayer && ( !pTargetPlayer->InSameTeam( pPlayer ) || bMeleeForcedFF ) )
 		{
 			float flSpeedBoostOnHitEnemy = 0.f;
 			CALL_ATTRIB_HOOK_FLOAT( flSpeedBoostOnHitEnemy, speed_boost_on_hit_enemy );
